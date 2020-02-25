@@ -1,0 +1,5 @@
+# TODO
+
+- Add a randomizer to the API
+- Make the server not throw out a bunch of nested arrays
+- Design and write the client
