@@ -1,0 +1,36 @@
+/*
+  Database configuration file.
+  Usage: sudo -Hu postgres psql -U username -d database_name < dbsetup
+                                                                        */
+/* SEQUENCE 1: Exercise ID */
+CREATE SEQUENCE exercise_id_seq
+  AS INT
+  INCREMENT 1;
+
+/* TABLE 1: Exercises */
+CREATE TABLE exercises (
+  /* Integers are used for the IDs as no rapid adds are expected. */
+  exercise_id INT DEFAULT NEXTVAL('exercise_id_seq'),
+  name VARCHAR(100) NOT NULL,
+  description TEXT,
+  /* Difficulty is measured in stars. 1 difficulty - half of a star. The maximum is 6. */
+  difficulty SMALLINT NOT NULL,
+  /* Range of times in which an exercise can be repeated. */
+  lowest_repeats SMALLINT NOT NULL,
+  highest_repeats SMALLINT NOT NULL,
+  /* Average time one time takes in seconds */
+  average_time INT NOT NULL,
+  items INT []
+);
+
+/* SEQUENCE 2: Item ID */
+CREATE SEQUENCE item_id_seq
+  AS INT
+  INCREMENT 1;
+
+/* TABLE 2: Items */
+CREATE TABLE items (
+  /* Integers are used for the IDs as no rapid adds are expected. */
+  item_id INT DEFAULT NEXTVAL('item_id_seq'),
+  name VARCHAR(100) NOT NULL
+);

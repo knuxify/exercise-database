@@ -1,0 +1,163 @@
+#!/usr/bin/python3
+# Database manager for the exercise manager project
+# List of tasks for the database manager:
+#  - allow the user to manipulate and list exercises
+#  - allow the user to manipulate and list items
+# This is a purely user-side tool; most of the actual connection
+# code required by the server is in the server code
+
+import os
+import json
+import psycopg2
+import argparse
+
+# Argument parsing.
+parser = argparse.ArgumentParser(description="Database manager for the exercise database project")
+parser.add_argument("target", help="This can be either 'exercise' or 'item'.")
+parser.add_argument("action", help="This can be either 'add', 'remove' or 'edit'.")
+args = parser.parse_args()
+
+# Load the configuration from the config.json file.
+# This file is shared across all tools.
+config = json.load(open('config.json'))
+# Connect to the database. No external handling is required here
+# because psycopg2 breaks the program if it fails to connect.
+conn = psycopg2.connect(host="localhost", database=config.get('dbname'), user=config.get('dbuser'), password=config.get('dbpass'))
+cursor = conn.cursor()
+
+# Program functions
+
+# Add exercise
+def exercise_add():
+	while True:
+		while True:
+			name = input("Name: ")
+			if not name:
+				print("Name cannot be empty.")
+				continue
+			else:
+				break
+		description = input("Description: ")
+		while True:
+			difficultyraw = input("Difficulty (1-6): ")
+			try:
+				difficulty = int(difficultyraw)
+			except:
+				print("Please enter a number from 1 to 6.")
+				continue
+			if difficulty > 6 or difficulty < 1:
+				print("Please enter a number from 1 to 6.")
+			else:
+				break
+		while True:
+			ltraw = input("Minimal amount of exercise repeats: ")
+			try:
+				lowest_repeats = int(ltraw)
+			except:
+				print("Please enter a number.")
+				continue
+			if lowest_repeats <= 0:
+				print("Please enter a number that's 1 or higher.")
+			break
+		while True:
+			rtraw = input("Maximum amount of exercise repeats: ")
+			try:
+				highest_repeats = int(rtraw)
+			except:
+				print("Please enter a number.")
+				continue
+			if highest_repeats < lowest_repeats:
+				print("The maximum amount cannot be higher than the minimal amount.")
+			else:
+				break
+		while True:
+			atraw = input("Amount of seconds which one repeat takes: ")
+			try:
+				average_time = int(atraw)
+			except:
+				print("Please enter a number.")
+				continue
+			if average_time <= 0:
+				print("This must be higher than 0.")
+			else:
+				break
+		items = input("Item IDs, separated by ', ':")
+		choice = input("Does this information look correct? [yes/no] ")
+		if choice == "yes" or choice == "Yes":
+			break
+		else:
+			continue
+	if description and items:
+		cursor.execute("INSERT INTO exercises (exercise_id, name, description, difficulty, lowest_repeats, highest_repeats, average_time, items) VALUES (nextval('exercise_id_seq'),'" + name + "','" + description + "'," + difficultyraw + "," + ltraw + "," + rtraw + "," + atraw + ",{" + items + "});")
+	elif description:
+		cursor.execute("INSERT INTO exercises (exercise_id, name, description, difficulty, lowest_repeats, highest_repeats, average_time) VALUES (nextval('exercise_id_seq'),'" + name + "','" + description + "'," + difficultyraw + "," + ltraw + "," + rtraw + "," + atraw + ");")
+	elif items:
+		cursor.execute("INSERT INTO exercises (exercise_id, name, difficulty, lowest_repeats, highest_repeats, average_time, items) VALUES (nextval('exercise_id_seq'),'" + name + "'," + difficultyraw + "," + ltraw + "," + rtraw + "," + atraw + ",{" + items + "});")
+	else:
+		cursor.execute("INSERT INTO exercises (exercise_id, name, difficulty, lowest_repeats, highest_repeats, average_time) VALUES (nextval('exercise_id_seq'),'" + name + "'," + difficultyraw + "," + ltraw + "," + rtraw + "," + atraw + ");")
+	conn.commit()
+	cursor.close()
+	conn.close()
+	print("Operation successful.")
+	quit(0)
+
+def item_add():
+	while True:
+		while True:
+			name = input("Name: ")
+			if not name:
+				print("Name cannot be empty.")
+				continue
+			else:
+				break
+		choice = input("Does this information look correct? [yes/no] ")
+		if choice == "yes" or choice == "Yes":
+			break
+		else:
+			continue
+	cursor.execute("INSERT INTO items (item_id, name) VALUES (nextval('item_id_seq'),'" + name + "');")
+	conn.commit()
+	cursor.close()
+	conn.close()
+	print("Operation successful.")
+	quit(0)
+
+def action_remove():
+	while True:
+		id = input("ID: ")
+		choice = input("Are you sure you want to remove this " + target + "? [yes/no] ")
+		if choice == "yes" or choice == "Yes":
+			break
+		else:
+			continue
+	cursor.execute("DELETE FROM " + target + "s WHERE " + target + "_id=" + id + ";")
+	conn.commit()
+	cursor.close()
+	conn.close()
+	print("Operation successful.")
+	quit(0)
+
+# Assign the arguments to variables and throw an error if they
+# are not correct.
+# There's probably a better way to do this, but oh well.
+if args.target == "exercise":
+	target = "exercise"
+elif args.target == "item":
+	target = "item"
+else:
+	print("Invalid target. The target can be either 'exercise' or 'item'.")
+	quit(1)
+
+if args.action == "add":
+	if target == "exercise":
+		exercise_add()
+	else:
+		item_add()
+elif args.action == "edit":
+	action = "edit"
+elif args.action == "remove":
+	action_remove()
+else:
+	print("Invalid action. The action can be 'add', 'remove' or 'edit'.")
+	quit(1)
+

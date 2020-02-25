@@ -1,0 +1,6 @@
+{
+  "dbname": "name of the database",
+  "dbuser": "database username",
+  "dbpass": "database user's password",
+  "domain": "localhost"
+}
